@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0f0f0f;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #1a1a1a;
+            border-radius: 20px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: #888888;
+            font-size: 14px;
+            margin-bottom: 35px;
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 2px solid #333;
+            background-color: #0f0f0f;
+            color: #ffffff;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.3s;
+            margin-bottom: 25px;
+        }
+
+        .input-box:focus {
+            border-color: #ff0000;
+        }
+
+        .input-box::placeholder {
+            color: #555;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 35px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-mp3 {
+            background-color: #ff0000;
+            color: white;
+        }
+
+        .btn-mp3:hover {
+            background-color: #cc0000;
+            transform: scale(1.05);
+        }
+
+        .btn-mp4 {
+            background-color: #ffffff;
+            color: #0f0f0f;
+        }
+
+        .btn-mp4:hover {
+            background-color: #dddddd;
+            transform: scale(1.05);
+        }
+
+        .status {
+            margin-top: 25px;
+            color: #888;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .status.loading {
+            color: #ff0000;
+        }
+
+        .status.success {
+            color: #00cc66;
+        }
+
+        .status.error {
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="logo">🎵</div>
+        <h1>YouTube Converter</h1>
+        <p class="subtitle">Paste a YouTube link and convert to MP3 or MP4</p>
+
+        <input 
+            type="text" 
+            class="input-box" 
+            id="ytLink" 
+            placeholder="https://www.youtube.com/watch?v=..."
+        />
+
+        <div class="buttons">
+            <button class="btn btn-mp3" onclick="convert('mp3')">
+                🎵 MP3
+            </button>
+            <button class="btn btn-mp4" onclick="convert('mp4')">
+                🎬 MP4
+            </button>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        async function convert(format) {
+    const link = document.getElementById('ytLink').value.trim();
+    const status = document.getElementById('status');
+
+    if (!link) {
+        status.className = 'status error';
+        status.textContent = '⚠️ Please paste a YouTube link first!';
+        return;
+    }
+
+    if (!link.includes('youtube.com') && !link.includes('youtu.be')) {
+        status.className = 'status error';
+        status.textContent = '⚠️ Invalid YouTube link!';
+        return;
+    }
+
+    status.className = 'status loading';
+    status.textContent = '⏳ Converting... Please wait...';
+
+    try {
+        const response = await fetch('/convert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: link, format: format })
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+           const contentDisposition = response.headers.get('Content-Disposition');
+let fileName = `video.${format}`;
+
+if (contentDisposition) {
+    const match = contentDisposition.match(/filename="(.+)"/);
+    if (match) {
+        fileName = match[1];
+    }
+}
+
+const a = document.createElement('a');
+a.href = downloadUrl;
+a.download = fileName;
+a.click();
+
+
+
+
+
+
+
+
+
+
+
+            status.className = 'status success';
+            status.textContent = '✅ Download started!';
+        } else {
+            const err = await response.json();
+            status.className = 'status error';
+            status.textContent = '❌ Error: ' + err.error;
+        }
+
+    } catch (e) {
+        status.className = 'status error';
+        status.textContent = '❌ Something went wrong!';
+    }
+}
+    </script>
+
+</body>
+</html>
